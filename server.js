@@ -8,7 +8,7 @@ const connectDB = require('./db');
 const User = require('./models/user');
 const Order = require('./models/order');
 const corsOptions = {
-    origin: ["https://app-devops-mulesoft.vercel.app", "http://localhost:3000"], // Allow localhost for development
+    origin: ["https://app-back-deploy.vercel.app/", "http://localhost:4000"], // Allow localhost for development
     methods: "GET,POST,PUT,DELETE"  };
   
 app.use(bodyParser.json());
