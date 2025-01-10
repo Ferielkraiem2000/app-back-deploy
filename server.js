@@ -7,13 +7,10 @@ const cors = require('cors');
 const connectDB = require('./db');
 const User = require('./models/user');
 const Order = require('./models/order');
-const corsOptions = {
-    origin: ["https://app-back-deploy.vercel.app/", "http://localhost:4000"], // Allow localhost for development
-    methods: "GET,POST,PUT,DELETE"  };
-  
-app.use(bodyParser.json());
 
-app.use(cors(corsOptions));
+app.use(bodyParser.json());
+app.use(cors());
+
 connectDB();
 
 app.post('/signup', async (req, res) => {
@@ -100,8 +97,7 @@ app.get("/orders", async (req, res) => {
       res.status(500).json({ message: "Error fetching orders", error });
     }
   });  
-  app.listen(port, '0.0.0.0', () => {
+app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/`);
-});
-
+  });
  
