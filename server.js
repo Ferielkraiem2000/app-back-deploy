@@ -97,7 +97,7 @@ app.get("/orders", async (req, res) => {
       res.status(500).json({ message: "Error fetching orders", error });
     }
   });  
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/`);
-  });
- 
+// app.listen(port, () => {
+//     console.log(`Server running at http://localhost:${port}/`);
+//   });
+module.exports = app;
