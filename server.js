@@ -98,7 +98,139 @@ app.get("/orders", async (req, res) => {
       res.status(500).json({ message: "Error fetching orders", error });
     }
   });  
-// app.listen(port, () => {
-//     console.log(`Server running at http://localhost:${port}/`);
-//   });
+
+
+// // Accept order and trigger GitHub workflow
+// app.post("/accept-order/:id", async (req, res) => {
+//     const { id } = req.params;
+
+//     try {
+//         const order = await Order.findById(id);
+//         if (!order) {
+//             return res.status(404).json({ message: "Order not found" });
+//         }
+
+//         order.status = "acceptée";
+//         await order.save();
+
+//         const GITHUB_TOKEN = "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"; 
+//         const workflowDispatchURL = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches`;
+
+//         await axios.post(
+//             workflowDispatchURL,
+//             {
+//                 ref: "main",
+//                 inputs: {
+//                     config: JSON.stringify({
+//                         versioningTool: order.versioningTool,
+//                         hostingType: order.hostingType,
+//                         monitoringTool: order.monitoringTool,
+//                         hostingJarTool: order.hostingJarTool,
+//                     }),
+//                 },
+//             },
+//             {
+//                 headers: {
+//                     Authorization: `Bearer ${GITHUB_TOKEN}`,
+//                     Accept: "application/vnd.github.v3+json",
+//                 },
+//             }
+//         );
+
+//         res.status(200).json({ message: "Order accepted and workflow triggered successfully!",   repoUrl, });
+//     } catch (error) {
+//         console.error("Error accepting order:", error.message);
+//         res.status(500).json({ message: "Error accepting order", error: error.message });
+//     }
+// });
+
+app.post('/accept-order/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const order = await Order.findByIdAndUpdate(
+            id,
+            { status: "acceptée" },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        const workflowDispatchUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches`;
+        const GITHUB_TOKEN = "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"; 
+
+        const workflowInputs = {
+            versioningTool: order.versioningTool,
+            hostingType: order.hostingType,
+            monitoringTool: order.monitoringTool,
+            hostingJarTool: order.hostingJarTool,
+        };
+
+        await axios.post(
+            workflowDispatchUrl,
+            {
+                ref: "main",
+                inputs: workflowInputs,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${GITHUB_TOKEN}`,
+                    Accept: "application/vnd.github.v3+json",
+                },
+            }
+        );
+
+        const workflowRunsUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/runs`;
+        let repoUrl = null;
+
+        for (let i = 0; i < 10; i++) {
+            const { data } = await axios.get(workflowRunsUrl, {
+                headers: {
+                    Authorization: `Bearer ${GITHUB_TOKEN}`,
+                    Accept: "application/vnd.github.v3+json",
+                },
+            });
+
+            const latestRun = data.workflow_runs.find(
+                (run) => run.head_branch === "main" && run.status === "completed"
+            );
+
+            if (latestRun) {
+                const runId = latestRun.id;
+                const runDetailsUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/runs/${runId}/jobs`;
+
+                const runDetails = await axios.get(runDetailsUrl, {
+                    headers: {
+                        Authorization: `Bearer ${GITHUB_TOKEN}`,
+                        Accept: "application/vnd.github.v3+json",
+                    },
+                });
+
+                repoUrl = runDetails.data.jobs[0].steps.find(
+                    (step) => step.name === "Create Repository"
+                ).output.repo_url;
+
+                break;
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
+
+        if (!repoUrl) {
+            return res.status(500).json({
+                message: "Failed to fetch repository URL from workflow",
+            });
+        }
+
+        res.status(200).json({
+            message: "Order accepted and repository created",
+            repoUrl,
+        });
+    } catch (error) {
+        console.error("Error accepting order:", error.message);
+        res.status(500).json({ message: "Error accepting order", error: error.message });
+    }
+});
 module.exports = app;
