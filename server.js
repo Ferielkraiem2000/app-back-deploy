@@ -9,11 +9,11 @@ const User = require('./models/user');
 const Order = require('./models/order');
 const axios = require('axios');
 const dotenv = require('dotenv');
-const result = dotenv.config();
-if (result.error) {
-    throw result.error;
-}
-console.log(result.parsed);
+// const result = dotenv.config();
+// if (result.error) {
+//     throw result.error;
+// }
+// console.log(result.parsed);
 app.use(bodyParser.json());
 app.use(cors());
 
