@@ -8,6 +8,7 @@ const connectDB = require('./db');
 const User = require('./models/user');
 const Order = require('./models/order');
 const axios = require('axios');
+require('dotenv').config();
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -160,7 +161,7 @@ app.post('/accept-order/:id', async (req, res) => {
         }
 
         const workflowDispatchUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches`;
-        const GITHUB_TOKEN = "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"; 
+        const GITHUB_TOKEN = process.env.GITHUBTOKEN;
 
         const workflowInputs = {
             versioningTool: order.versioningTool,
