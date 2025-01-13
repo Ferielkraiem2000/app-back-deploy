@@ -160,7 +160,7 @@ app.post('/accept-order/:id', async (req, res) => {
         }
 
         const workflowDispatchUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches`;
-        const GITHUB_TOKEN = "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"; 
+        const GITHUB_TOKEN = "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"; 
 
         const workflowInputs = {
             versioningTool: order.versioningTool,
@@ -189,11 +189,11 @@ app.post('/accept-order/:id', async (req, res) => {
         for (let i = 0; i < 10; i++) {
             const { data } = await axios.get(workflowRunsUrl, {
                 headers: {
-                    Authorization: `Bearer ${GITHUB_TOKEN}`,
+                    Authorization: `token ${GITHUB_TOKEN}`,
                     Accept: "application/vnd.github.v3+json",
                 },
             });
-
+            console.log(data)
             const latestRun = data.workflow_runs.find(
                 (run) => run.head_branch === "main" && run.status === "completed"
             );
