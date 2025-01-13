@@ -160,7 +160,7 @@ app.post('/accept-order/:id', async (req, res) => {
         }
 
         const workflowDispatchUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches`;
-        const GITHUB_TOKEN = "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"; 
+        const GITHUB_TOKEN = "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"; 
 
         const workflowInputs = {
             versioningTool: order.versioningTool,
