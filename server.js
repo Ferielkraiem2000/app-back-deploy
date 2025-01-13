@@ -7,6 +7,7 @@ const cors = require('cors');
 const connectDB = require('./db');
 const User = require('./models/user');
 const Order = require('./models/order');
+const axios = require('axios');
 
 app.use(bodyParser.json());
 app.use(cors());
