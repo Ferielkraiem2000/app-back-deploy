@@ -178,7 +178,7 @@ app.post('/accept-order/:id', async (req, res) => {
             },
             {
                 headers: {
-                    Authorization: `token ${GITHUB_TOKEN}`,
+                    Authorization: `token ${GITHUBTOKEN}`,
                     Accept: "application/vnd.github.v3+json",
                 },
             }
@@ -190,7 +190,7 @@ app.post('/accept-order/:id', async (req, res) => {
         for (let i = 0; i < 10; i++) {
             const { data } = await axios.get(workflowRunsUrl, {
                 headers: {
-                    Authorization: `token ${GITHUB_TOKEN}`,
+                    Authorization: `token ${GITHUBTOKEN}`,
                     Accept: "application/vnd.github.v3+json",
                 },
             });
@@ -205,7 +205,7 @@ app.post('/accept-order/:id', async (req, res) => {
 
                 const runDetails = await axios.get(runDetailsUrl, {
                     headers: {
-                        Authorization: `token ${GITHUB_TOKEN}`,
+                        Authorization: `token ${GITHUBTOKEN}`,
                         Accept: "application/vnd.github.v3+json",
                     },
                 });
