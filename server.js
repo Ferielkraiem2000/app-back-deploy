@@ -177,7 +177,7 @@ app.post('/accept-order/:id', async (req, res) => {
             },
             {
                 headers: {
-                    Authorization: `Bearer ${GITHUB_TOKEN}`,
+                    Authorization: `token ${GITHUB_TOKEN}`,
                     Accept: "application/vnd.github.v3+json",
                 },
             }
@@ -204,7 +204,7 @@ app.post('/accept-order/:id', async (req, res) => {
 
                 const runDetails = await axios.get(runDetailsUrl, {
                     headers: {
-                        Authorization: `Bearer ${GITHUB_TOKEN}`,
+                        Authorization: `token ${GITHUB_TOKEN}`,
                         Accept: "application/vnd.github.v3+json",
                     },
                 });
