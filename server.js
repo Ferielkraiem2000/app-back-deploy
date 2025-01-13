@@ -78,12 +78,13 @@ app.post('/signin', async (req, res) => {
 
 app.post('/save-order', async (req, res) => {
     console.log("Request body:", req.body); 
-    const { versioningTool, hostingType, monitoringTool, hostingJarTool } = req.body;
+    const { versioningTool, hostingType, monitoringTool, hostingJarTool,status } = req.body;
     const order = new Order({
         versioningTool,
         hostingType,
         monitoringTool,
         hostingJarTool,
+        status: status || "en attente",
     });
     await order.save();
     res.status(201).send({ message: "Order saved successfully!" });
