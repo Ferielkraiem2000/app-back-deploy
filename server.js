@@ -97,6 +97,8 @@ app.post('/save-order', async (req, res) => {
   });
 
 app.get("/orders", async (req, res) => {
+    console.log(process.env.GITHUBTOKEN)
+
     try {
       const orders = await Order.find();
       res.json(orders);
