@@ -9,9 +9,7 @@ const User = require('./models/user');
 const Order = require('./models/order');
 const axios = require('axios');
 const dotenv = require('dotenv');
-const result= require("dotenv").config();
-const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
-console.log(GITHUBTOKEN); 
+ 
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -95,8 +93,9 @@ app.post('/save-order', async (req, res) => {
   });
 
 app.get("/orders", async (req, res) => {
-    console.log("GITHUBTOKEN outside route:", GITHUBTOKEN);
-
+    const result= require("dotenv").config();
+    const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
+    console.log(GITHUBTOKEN);
     try {
       const orders = await Order.find();
       res.json(orders);
