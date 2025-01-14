@@ -306,4 +306,26 @@ app.post('/accept-order/:id', async (req, res) => {
     }
 });
 
+app.delete('/delete-order/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        console.log("Deleting order with ID:", id);
+
+        const deletedOrder = await Order.findByIdAndDelete(id);
+
+        if (!deletedOrder) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        res.status(200).json({
+            message: "Order deleted successfully",
+            order: deletedOrder,
+        });
+    } catch (error) {
+        console.error("Error deleting order:", error);
+        res.status(500).json({ message: "Error deleting order", error: error.message });
+    }
+});
+
 module.exports = app;
