@@ -151,7 +151,7 @@ app.get("/orders", async (req, res) => {
 // });
 
 app.post('/accept-order/:id', async (req, res) => {
-    console.log(process.env)
+    console.log(process.env.GITHUBTOKEN)
     try {
         const { id } = req.params;
 
