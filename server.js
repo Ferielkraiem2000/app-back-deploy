@@ -104,7 +104,15 @@ app.get("/orders", async (req, res) => {
 
 app.post('/accept-order/:id', async (req, res) => {
     const result= require("dotenv").config();
+    // const GITHUBTOKEN = process.env.GITHUBTOKEN;
+    if (result.error) {
+        console.error("Error loading .env file:", result.error);
+    } else {
+        console.log("Environment variables loaded successfully");
+    }
     const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
+    console.log("GitHub Token:", GITHUBTOKEN);
+
     try {
         console.log("token :", GITHUBTOKEN);    
         const { id } = req.params;
