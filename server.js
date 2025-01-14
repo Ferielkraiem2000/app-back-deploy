@@ -93,9 +93,7 @@ app.post('/save-order', async (req, res) => {
   });
 
 app.get("/orders", async (req, res) => {
-    const result= require("dotenv").config();
-    const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
-    console.log(GITHUBTOKEN);
+
     try {
       const orders = await Order.find();
       res.json(orders);
@@ -104,53 +102,10 @@ app.get("/orders", async (req, res) => {
     }
   });  
 
-
-// // Accept order and trigger GitHub workflow
-// app.post("/accept-order/:id", async (req, res) => {
-//     const { id } = req.params;
-
-//     try {
-//         const order = await Order.findById(id);
-//         if (!order) {
-//             return res.status(404).json({ message: "Order not found" });
-//         }
-
-//         order.status = "acceptée";
-//         await order.save();
-
-//         const GITHUB_TOKEN = "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"; 
-//         const workflowDispatchURL = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches`;
-
-//         await axios.post(
-//             workflowDispatchURL,
-//             {
-//                 ref: "main",
-//                 inputs: {
-//                     config: JSON.stringify({
-//                         versioningTool: order.versioningTool,
-//                         hostingType: order.hostingType,
-//                         monitoringTool: order.monitoringTool,
-//                         hostingJarTool: order.hostingJarTool,
-//                     }),
-//                 },
-//             },
-//             {
-//                 headers: {
-//                     Authorization: `Bearer ${GITHUB_TOKEN}`,
-//                     Accept: "application/vnd.github.v3+json",
-//                 },
-//             }
-//         );
-
-//         res.status(200).json({ message: "Order accepted and workflow triggered successfully!",   repoUrl, });
-//     } catch (error) {
-//         console.error("Error accepting order:", error.message);
-//         res.status(500).json({ message: "Error accepting order", error: error.message });
-//     }
-// });
-
 app.post('/accept-order/:id', async (req, res) => {
-    console.log(GITHUBTOKEN)
+    const result= require("dotenv").config();
+    const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
+    console.log(GITHUBTOKEN);
     try {
         const { id } = req.params;
 
@@ -165,7 +120,6 @@ app.post('/accept-order/:id', async (req, res) => {
         }
 
         const workflowDispatchUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches`;
-        const GITHUBTOKEN = process.env.GITHUBTOKEN;
         const workflowInputs = {
             versioningTool: order.versioningTool,
             hostingType: order.hostingType,
