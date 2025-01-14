@@ -111,10 +111,102 @@ if (result.error) {
 const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
 console.log("GitHub Token:", GITHUBTOKEN);
 
-app.post('/accept-order/:id', async (req, res) => { 
+// app.post('/accept-order/:id', async (req, res) => { 
+//     try {
+//         console.log("token :", GITHUBTOKEN);   
+//         req.body={};
+//         const { id } = req.params;
+//         const order = await Order.findByIdAndUpdate(
+//             id,
+//             { status: "acceptée" },
+//             { new: true }
+//         );
+
+//         if (!order) {
+//             return res.status(404).json({ message: "Order not found" });
+//         }
+
+//         const workflowDispatchUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches`;
+//         const workflowInputs = {
+//             versioningTool: order.versioningTool,
+//             hostingType: order.hostingType,
+//             monitoringTool: order.monitoringTool,
+//             hostingJarTool: order.hostingJarTool,
+//         };
+
+//         await axios.post(
+//             workflowDispatchUrl,
+//             {
+//                 ref: "main",
+//                 inputs: workflowInputs,
+//             },
+//             {
+//                 headers: {
+//                     Authorization: `token ${GITHUBTOKEN}`,
+//                     Accept: "application/vnd.github.v3+json",
+//                 },
+//             }
+//         );
+
+//         const workflowRunsUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/runs`;
+//         let repoUrl = null;
+
+//         for (let i = 0; i < 10; i++) {
+//             const { data } = await axios.get(workflowRunsUrl, {
+//                 headers: {
+//                     Authorization: `token ${GITHUBTOKEN}`,
+//                     Accept: "application/vnd.github.v3+json",
+//                 },
+//             });
+//             console.log(data)
+//             const latestRun = data.workflow_runs.find(
+//                 (run) => run.head_branch === "main" && run.status === "completed"
+//             );
+
+//             if (latestRun) {
+//                 const runId = latestRun.id;
+//                 const runDetailsUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/runs/${runId}/jobs`;
+
+//                 const runDetails = await axios.get(runDetailsUrl, {
+//                     headers: {
+//                         Authorization: `token ${GITHUBTOKEN}`,
+//                         Accept: "application/vnd.github.v3+json",
+//                     },
+//                 });
+
+//                 repoUrl = runDetails.data.jobs[0].steps.find(
+//                     (step) => step.name === "Create Repository"
+//                 ).output.repo_url;
+
+//                 break;
+//             }
+
+//             await new Promise((resolve) => setTimeout(resolve, 5000));
+//         }
+
+//         if (!repoUrl) {
+//             return res.status(500).json({
+//                 message: "Failed to fetch repository URL from workflow",
+//             });
+//         }
+
+//         res.status(200).json({
+//             message: "Order accepted and repository created",
+//             repoUrl,
+//         });
+//     } catch (error) {
+//         console.error("Error accepting order:", error.message);
+//         res.status(500).json({ message: "Error accepting order", error: error.message });
+//     }
+// });
+
+app.post('/accept-order/:id', async (req, res) => {
     try {
-        console.log("token :", GITHUBTOKEN);   
-        req.body={};
+        if (!GITHUBTOKEN) {
+            return res.status(500).json({ message: "GitHub token is missing" });
+        }
+
+        console.log("Order ID:", req.params.id);
         const { id } = req.params;
         const order = await Order.findByIdAndUpdate(
             id,
@@ -126,6 +218,8 @@ app.post('/accept-order/:id', async (req, res) => {
             return res.status(404).json({ message: "Order not found" });
         }
 
+        console.log("Order found:", order);
+
         const workflowDispatchUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches`;
         const workflowInputs = {
             versioningTool: order.versioningTool,
@@ -133,6 +227,8 @@ app.post('/accept-order/:id', async (req, res) => {
             monitoringTool: order.monitoringTool,
             hostingJarTool: order.hostingJarTool,
         };
+
+        console.log("Dispatching workflow with inputs:", workflowInputs);
 
         await axios.post(
             workflowDispatchUrl,
@@ -148,6 +244,8 @@ app.post('/accept-order/:id', async (req, res) => {
             }
         );
 
+        console.log("Workflow dispatched successfully");
+
         const workflowRunsUrl = `https://api.github.com/repos/comweave/Pipelines_Version2/actions/runs`;
         let repoUrl = null;
 
@@ -158,7 +256,9 @@ app.post('/accept-order/:id', async (req, res) => {
                     Accept: "application/vnd.github.v3+json",
                 },
             });
-            console.log(data)
+
+            console.log(`Polling attempt ${i + 1}:`, data);
+
             const latestRun = data.workflow_runs.find(
                 (run) => run.head_branch === "main" && run.status === "completed"
             );
@@ -174,14 +274,20 @@ app.post('/accept-order/:id', async (req, res) => {
                     },
                 });
 
-                repoUrl = runDetails.data.jobs[0].steps.find(
+                console.log("Run Details:", runDetails.data);
+
+                const repoStep = runDetails.data.jobs[0].steps.find(
                     (step) => step.name === "Create Repository"
-                ).output.repo_url;
+                );
+
+                if (repoStep && repoStep.output && repoStep.output.repo_url) {
+                    repoUrl = repoStep.output.repo_url;
+                }
 
                 break;
             }
 
-            await new Promise((resolve) => setTimeout(resolve, 5000));
+            await new Promise((resolve) => setTimeout(resolve, 10000)); // 10 seconds
         }
 
         if (!repoUrl) {
@@ -195,8 +301,9 @@ app.post('/accept-order/:id', async (req, res) => {
             repoUrl,
         });
     } catch (error) {
-        console.error("Error accepting order:", error.message);
+        console.error("Error accepting order:", error);
         res.status(500).json({ message: "Error accepting order", error: error.message });
     }
 });
+
 module.exports = app;
