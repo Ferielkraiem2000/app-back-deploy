@@ -110,7 +110,6 @@ app.post('/accept-order/:id', async (req, res) => {
     console.log(GITHUBTOKEN);
     try {
         const { id } = req.params;
-
         const order = await Order.findByIdAndUpdate(
             id,
             { status: "acceptée" },
