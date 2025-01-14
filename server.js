@@ -8,7 +8,7 @@ const connectDB = require('./db');
 const User = require('./models/user');
 const Order = require('./models/order');
 const axios = require('axios');
-const dotenv = require('dotenv');
+// const dotenv = require('dotenv');
 // const result = dotenv.config();
 // if (result.error) {
 //     throw result.error;
