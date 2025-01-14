@@ -9,9 +9,7 @@ const User = require('./models/user');
 const Order = require('./models/order');
 const axios = require('axios');
 const dotenv = require('dotenv');
-// const result= require("dotenv").config();
-// const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
-// console.log("token :",GITHUBTOKEN);
+
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -106,8 +104,8 @@ app.get("/orders", async (req, res) => {
 
 app.post('/accept-order/:id', async (req, res) => {
     const result= require("dotenv").config();
-    const GITHUBTOKEN = process.env.GITHUBTOKEN;
-    console.log(GITHUBTOKEN);
+    const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
+    console.log("token :", GITHUBTOKEN);    
     try {
         const { id } = req.params;
         const order = await Order.findByIdAndUpdate(
