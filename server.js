@@ -9,7 +9,7 @@ const User = require('./models/user');
 const Order = require('./models/order');
 const axios = require('axios');
 const dotenv = require('dotenv');
-// const result = dotenv.config();
+require("dotenv").config();
 // if (result.error) {
 //     throw result.error;
 // }
@@ -97,7 +97,7 @@ app.post('/save-order', async (req, res) => {
   });
 
 app.get("/orders", async (req, res) => {
-    console.log(process.env.GITHUBTOKEN)
+    console.log("GITHUBTOKEN outside route:", process.env.GITHUBTOKEN);
 
     try {
       const orders = await Order.find();
