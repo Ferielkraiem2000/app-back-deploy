@@ -101,15 +101,7 @@ app.get("/orders", async (req, res) => {
       res.status(500).json({ message: "Error fetching orders", error });
     }
   });  
-const result= require("dotenv").config();
-// const GITHUBTOKEN = process.env.GITHUBTOKEN;
-if (result.error) {
-      console.error("Error loading .env file:", result.error);
-} else {
-      console.log("Environment variables loaded successfully");
-}
-const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
-console.log("GitHub Token:", GITHUBTOKEN);
+
 
 // app.post('/accept-order/:id', async (req, res) => { 
 //     try {
@@ -201,6 +193,9 @@ console.log("GitHub Token:", GITHUBTOKEN);
 // });
 
 app.post('/accept-order/:id', async (req, res) => {
+    const result= require("dotenv").config();
+    const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
+    console.log("GitHub Token:", GITHUBTOKEN);
     try {
         if (!GITHUBTOKEN) {
             return res.status(500).json({ message: "GitHub token is missing" });
