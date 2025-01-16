@@ -103,8 +103,9 @@ app.get("/orders", async (req, res) => {
 
 app.post("/accept-order/:id", async (req, res) => {
   const result = require("dotenv").config();
-  const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
-
+  // const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
+  const GITHUBTOKEN=process.env.GITHUBTOKEN; 
+  console.log("*************",GITHUBTOKEN)
   try {
     const { id } = req.params;
 
