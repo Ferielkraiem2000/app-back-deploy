@@ -104,6 +104,7 @@ require("dotenv").config();
 // const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
 const GITHUBTOKEN=process.env.GITHUBTOKEN; 
 console.log("*************",GITHUBTOKEN)
+
 app.post("/accept-order/:id", async (req, res) => {
 
   try {
@@ -129,7 +130,7 @@ app.post("/accept-order/:id", async (req, res) => {
       hostingJarTool: order.hostingJarTool,
     };
 
-    await axios.post(
+    const dispatchResponse = await axios.post(
       workflowDispatchUrl,
       {
         ref: "main", // Branch name
@@ -142,7 +143,8 @@ app.post("/accept-order/:id", async (req, res) => {
         },
       }
     );
-
+    const workflowRunId = dispatchResponse.data.workflow_run.id;
+    console.log("Triggered Workflow Run ID:", workflowRunId);
     const workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/runs`;
     let latestRun = null;
 
@@ -155,7 +157,7 @@ app.post("/accept-order/:id", async (req, res) => {
       });
 
       latestRun = data.workflow_runs.find(
-        (run) => run.head_branch === "main" && run.status === "completed"
+        (run) => run.id === workflowRunId && run.head_branch === "main" && run.status === "completed"
       );
       console.log(latestRun);
       
