@@ -212,11 +212,16 @@ app.post("/accept-order/:id", async (req, res) => {
         message: "No repositories found.",
       });
     }
+    const filteredRepos = repos.filter(repo => repo.name.includes("temp-repo"));
 
-    // Sort repositories by 'created_at' in descending order (latest first)
-    const latestRepo = repos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-     
-    const repoUrl = latestRepo.html_url; // Get the URL of the latest created repository
+    if (filteredRepos.length === 0) {
+      return res.status(404).json({
+        message: "No repository with 'temp-repo' in its name was found.",
+      });
+    }
+    
+    const latestRepo = filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    const repoUrl = latestRepo.html_url; 
     console.log("$$$$$$$$$$$$",repoUrl)
     res.status(200).json({
       message: "Workflow completed successfully.",
