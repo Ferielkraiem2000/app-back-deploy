@@ -143,7 +143,6 @@ app.post("/accept-order/:id", async (req, res) => {
         },
       }
     );
-    console.log(dispa)
     const workflowRunId = dispatchResponse.workflow_run.id;
     console.log("Triggered Workflow Run ID:", workflowRunId);
     const workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/runs`;
