@@ -7,18 +7,12 @@ const cors = require('cors');
 const connectDB = require('./db');
 const User = require('./models/user');
 const Order = require('./models/order');
-const { Octokit } = require("@octokit/rest");
 const axios = require('axios');
-// const request = require("@octokit/request");
 
-// const octokit=require('octokit');
 const dotenv = require('dotenv');
-// const zlib = require('zlib');
-// const { decode } = require('punycode');
+app.use(express.json()); // Instead of body-parser.json()
 
-app.use(bodyParser.json());
 app.use(cors());
-
 connectDB();
 
 app.post('/signup', async (req, res) => {
