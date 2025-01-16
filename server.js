@@ -10,8 +10,7 @@ const Order = require('./models/order');
 const axios = require('axios');
 
 const dotenv = require('dotenv');
-app.use(express.json()); // Instead of body-parser.json()
-
+app.use(express.json()); 
 app.use(cors());
 connectDB();
 
@@ -217,11 +216,11 @@ app.post("/accept-order/:id", async (req, res) => {
     // Sort repositories by 'created_at' in descending order (latest first)
     const latestRepo = repos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
-    const latestRepoUrl = latestRepo.html_url; // Get the URL of the latest created repository
+    const repoUrl = latestRepo.html_url; // Get the URL of the latest created repository
 
     res.status(200).json({
       message: "Workflow completed successfully.",
-      latestRepoUrl,
+      repoUrl,
     });
     // res.status(200).json({
     //   message: "Workflow completed successfully.",
