@@ -158,8 +158,39 @@ app.post("/accept-order/:id", async (req, res) => {
         (run) => run.head_branch === "main" && run.status === "completed"
       );
 
-      if (latestRun) break;
-      await new Promise((resolve) => setTimeout(resolve, 10000));
+      // if (latestRun) break;
+      // await new Promise((resolve) => setTimeout(resolve, 10000));
+      if(latestRun){
+        const reposUrl = "https://api.github.com/user/repos";
+        const { data: repos } = await axios.get(reposUrl, {
+          headers: {
+            Authorization: `Bearer ${GITHUBTOKEN}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        });
+    
+        if (repos.length === 0) {
+          return res.status(500).json({
+            message: "No repositories found.",
+          });
+        }
+        const filteredRepos = repos.filter(repo => repo.name.includes("temp-repo"));
+    
+        if (filteredRepos.length === 0) {
+          return res.status(404).json({
+            message: "No repository with 'temp-repo' in its name was found.",
+          });
+        }
+        
+        const latestRepo = filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+        const repoUrl = latestRepo.html_url; 
+        console.log("$$$$$$$$$$$$",repoUrl)
+        res.status(200).json({
+          message: "Workflow completed successfully.",
+          repoUrl,
+        });
+      }
+
     }
 
     if (!latestRun) {
@@ -199,34 +230,34 @@ app.post("/accept-order/:id", async (req, res) => {
 
     // const repoUrl = repoUrlMatch[1];
     // Fetch the list of repositories and get the latest one by created_at
-    const reposUrl = "https://api.github.com/user/repos"; // This gets repositories for the authenticated user
-    const { data: repos } = await axios.get(reposUrl, {
-      headers: {
-        Authorization: `Bearer ${GITHUBTOKEN}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
+    // const reposUrl = "https://api.github.com/user/repos"; // This gets repositories for the authenticated user
+    // const { data: repos } = await axios.get(reposUrl, {
+    //   headers: {
+    //     Authorization: `Bearer ${GITHUBTOKEN}`,
+    //     Accept: "application/vnd.github.v3+json",
+    //   },
+    // });
 
-    if (repos.length === 0) {
-      return res.status(500).json({
-        message: "No repositories found.",
-      });
-    }
-    const filteredRepos = repos.filter(repo => repo.name.includes("temp-repo"));
+    // if (repos.length === 0) {
+    //   return res.status(500).json({
+    //     message: "No repositories found.",
+    //   });
+    // }
+    // const filteredRepos = repos.filter(repo => repo.name.includes("temp-repo"));
 
-    if (filteredRepos.length === 0) {
-      return res.status(404).json({
-        message: "No repository with 'temp-repo' in its name was found.",
-      });
-    }
+    // if (filteredRepos.length === 0) {
+    //   return res.status(404).json({
+    //     message: "No repository with 'temp-repo' in its name was found.",
+    //   });
+    // }
     
-    const latestRepo = filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-    const repoUrl = latestRepo.html_url; 
-    console.log("$$$$$$$$$$$$",repoUrl)
-    res.status(200).json({
-      message: "Workflow completed successfully.",
-      repoUrl,
-    });
+    // const latestRepo = filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    // const repoUrl = latestRepo.html_url; 
+    // console.log("$$$$$$$$$$$$",repoUrl)
+    // res.status(200).json({
+    //   message: "Workflow completed successfully.",
+    //   repoUrl,
+    // });
     // res.status(200).json({
     //   message: "Workflow completed successfully.",
     //   repoUrl,
