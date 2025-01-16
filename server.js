@@ -100,16 +100,15 @@ app.get("/orders", async (req, res) => {
       res.status(500).json({ message: "Error fetching orders", error });
     }
   });  
-
+require("dotenv").config();
+// const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
+const GITHUBTOKEN=process.env.GITHUBTOKEN; 
+console.log("*************",GITHUBTOKEN)
 app.post("/accept-order/:id", async (req, res) => {
-  const result = require("dotenv").config();
-  // const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
-  const GITHUBTOKEN=process.env.GITHUBTOKEN; 
-  console.log("*************",GITHUBTOKEN)
+
   try {
     const { id } = req.params;
 
-    // Update the order status
     const order = await Order.findByIdAndUpdate(
       id,
       { status: "acceptée" },
