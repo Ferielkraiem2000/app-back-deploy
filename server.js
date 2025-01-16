@@ -157,12 +157,12 @@ app.post("/accept-order/:id", async (req, res) => {
       latestRun = data.workflow_runs.find(
         (run) => run.head_branch === "main" && run.status === "completed"
       );
-
+      console.log(latestRun);
+      
       if (latestRun) break;
       await new Promise((resolve) => setTimeout(resolve, 10000));
       
     }
-    console.log(latestRun)
     if (!latestRun) {
       return res.status(500).json({
         message: "Workflow run not completed.",
