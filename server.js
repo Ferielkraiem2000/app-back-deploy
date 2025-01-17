@@ -164,15 +164,24 @@ app.post("/accept-order/:id", async (req, res) => {
         },
       });
   
-      const sortedRuns = data.workflow_runs.sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
-      );
-      latestRun = sortedRuns.find(
+      // const sortedRuns = data.workflow_runs.sort(
+      //   (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      // );
+      filteredRuns = data.workflow_runs.find(
         (run) =>
           run.head_branch === "main" &&
           run.status === "completed" &&
           run.conclusion === "success"
       );
+      const latestRun = filteredRuns.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      )[0];
+      // latestRun = sortedRuns.find(
+      //   (run) =>
+      //     run.head_branch === "main" &&
+      //     run.status === "completed" &&
+      //     run.conclusion === "success"
+      // );
       console.log(latestRun)
       if (latestRun) {
         console.log("Workflow terminé avec succès.");
