@@ -644,6 +644,9 @@ app.delete('/delete-order/:id', async (req, res) => {
 });
 
 module.exports = app;
+
+server.setTimeout(120000); 
+
 // app.listen(port, () => {
 //     console.log(`Server is running on http://localhost:${port}`);
 //   });
