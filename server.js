@@ -168,7 +168,7 @@ app.post("/accept-order/:id", async (req, res) => {
       const sortedRuns = data.workflow_runs.sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
-      latestRun = sortedRuns.workflow_runs.find(
+      latestRun = sortedRuns.find(
         (run) =>
           run.head_branch === "main" &&
           run.status === "completed" &&
