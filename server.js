@@ -178,7 +178,33 @@ app.post("/accept-order/:id", async (req, res) => {
   
         if (latestRun) {
           console.log("Workflow completed successfully.");
-          break;
+          console.log("Fetching temporary repository information...");
+          const reposUrl = "https://api.github.com/user/repos";
+      
+          const { data: repos } = await axios.get(reposUrl, {
+            headers: {
+              Authorization: `Bearer ${GITHUBTOKEN}`,
+              Accept: "application/vnd.github.v3+json",
+            },
+          });
+          
+          const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
+      
+          if (filteredRepos.length === 0) {
+            return res.status(404).json({
+              message: "No temporary repository found.",
+            });
+          }
+      
+          const latestRepo = filteredRepos.sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          )[0];
+          const repoUrl = latestRepo.html_url;
+
+          res.status(200).json({
+            message: "Workflow completed successfully.",
+            repoUrl,
+          });
         }
   
         // Wait for 10 seconds before retrying
@@ -191,33 +217,9 @@ app.post("/accept-order/:id", async (req, res) => {
         });
       }
   
-      console.log("Fetching temporary repository information...");
-      const reposUrl = "https://api.github.com/user/repos";
+
   
-      const { data: repos } = await axios.get(reposUrl, {
-        headers: {
-          Authorization: `Bearer ${GITHUBTOKEN}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-      });
-      
-      const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
-  
-      if (filteredRepos.length === 0) {
-        return res.status(404).json({
-          message: "No temporary repository found.",
-        });
-      }
-  
-      const latestRepo = filteredRepos.sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
-      )[0];
-      const repoUrl = latestRepo.html_url;
-  
-      res.status(200).json({
-        message: "Workflow completed successfully.",
-        repoUrl,
-      });
+
     } catch (error) {
       console.error("Error:", error.message, error.stack);
       res.status(500).json({
