@@ -152,7 +152,7 @@ app.post("/accept-order/:id", async (req, res) => {
   
     let latestRun = null;
     let attempt = 0;
-    const maxAttempts = 20;
+    const maxAttempts = 30;
   
     while (attempt < maxAttempts) {
       attempt++;
@@ -179,7 +179,7 @@ app.post("/accept-order/:id", async (req, res) => {
       }
   
       // Attendre 10 secondes avant de réessayer
-      await new Promise((resolve) => setTimeout(resolve, 10000));
+      await new Promise((resolve) => setTimeout(resolve, 20000));
     }
   
     if (!latestRun) {
