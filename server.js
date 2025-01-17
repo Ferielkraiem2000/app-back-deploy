@@ -162,6 +162,7 @@ app.post("/accept-order/:id", async (req, res) => {
           Authorization: `Bearer ${GITHUBTOKEN}`,
           Accept: "application/vnd.github.v3+json",
         },
+        timeout: 60000 
       });
   
       // const sortedRuns = data.workflow_runs.sort(
