@@ -123,14 +123,14 @@ app.post("/accept-order/:id", async (req, res) => {
 
     const workflowDispatchUrl =
       "https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches";
-  
+
     const workflowInputs = {
       versioningTool: order.versioningTool,
       hostingType: order.hostingType,
       monitoringTool: order.monitoringTool,
       hostingJarTool: order.hostingJarTool,
     };
-  
+
     try {
       // Trigger the workflow
       const dispatchResponse = await axios.post(
@@ -146,15 +146,15 @@ app.post("/accept-order/:id", async (req, res) => {
           },
         }
       );
-  
+
       console.log("Workflow triggered successfully.");
-  
+
       const workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/runs`;
-  
+
       let latestRun = null;
       let attempt = 0;
       const maxAttempts = 30;
-  
+
       while (attempt < maxAttempts) {
         attempt++;
         console.log(`Checking workflow status, attempt ${attempt}...`);
@@ -164,7 +164,7 @@ app.post("/accept-order/:id", async (req, res) => {
             Accept: "application/vnd.github.v3+json",
           },
         });
-  
+
         const filteredRuns = data.workflow_runs.filter(
           (run) =>
             run.head_branch === "main" &&
@@ -175,50 +175,50 @@ app.post("/accept-order/:id", async (req, res) => {
         latestRun = filteredRuns.sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         )[0];
-  
+
         if (latestRun) {
           console.log("Workflow completed successfully.");
           console.log("Fetching temporary repository information...");
+
+          // Fetch repositories once the workflow is completed
           const reposUrl = "https://api.github.com/user/repos";
-      
+
           const { data: repos } = await axios.get(reposUrl, {
             headers: {
               Authorization: `Bearer ${GITHUBTOKEN}`,
               Accept: "application/vnd.github.v3+json",
             },
           });
-          
+
+          // Find temporary repo
           const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
-      
+
           if (filteredRepos.length === 0) {
             return res.status(404).json({
               message: "No temporary repository found.",
             });
           }
-      
+
           const latestRepo = filteredRepos.sort(
             (a, b) => new Date(b.created_at) - new Date(a.created_at)
           )[0];
           const repoUrl = latestRepo.html_url;
 
-          res.status(200).json({
+          // Return response with the repository URL
+          return res.status(200).json({
             message: "Workflow completed successfully.",
             repoUrl,
           });
         }
-  
+
         // Wait for 10 seconds before retrying
         await new Promise((resolve) => setTimeout(resolve, 10000));
       }
-  
-      if (!latestRun) {
-        return res.status(500).json({
-          message: "The workflow did not complete within the timeout limit.",
-        });
-      }
-  
 
-  
+      // If no successful run found within the attempts limit
+      return res.status(500).json({
+        message: "The workflow did not complete within the timeout limit.",
+      });
 
     } catch (error) {
       console.error("Error:", error.message, error.stack);
