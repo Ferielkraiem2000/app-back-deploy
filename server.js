@@ -157,7 +157,7 @@ app.post("/accept-order/:id", async (req, res) => {
       );
 
       let latestRun = null;
-      const maxAttempts = 10;
+      const maxAttempts = 13;
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         console.log(`Checking workflow status, attempt ${attempt}...`);
