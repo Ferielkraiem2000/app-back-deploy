@@ -189,7 +189,7 @@ app.post("/accept-order/:id", async (req, res) => {
     }
   
     console.log("Récupération des informations du dépôt temporaire...");
-    new Promise((resolve) => setTimeout(resolve,  100000)); //50 secondes
+    await new Promise((resolve) => setTimeout(resolve,  100000)); //100 secondes
     const reposUrl = "https://api.github.com/user/repos";
   
     const { data: repos } = await axios.get(reposUrl, {
