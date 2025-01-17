@@ -547,14 +547,16 @@ app.post("/accept-order/:id", async (req, res) => {
           },
         });
 
-        latestRun = data.workflow_runs.filter(
+        latestRun = data.workflow_runs
+        .filter(
           (run) =>
             run.head_branch === "main" &&
             run.status === "completed" &&
             run.conclusion === "success" &&
             new Date(run.run_started_at) >= new Date(postRequestTime)
-          );
-
+        )
+        .sort((a, b) => new Date(b.run_started_at) - new Date(a.run_started_at))[0]; // Get the most recent run
+      
         // latestRun = filteredRuns.sort(
         //   (a, b) => new Date(b.created_at) - new Date(a.created_at)
         // )[0];
