@@ -123,124 +123,117 @@ app.post("/accept-order/:id", async (req, res) => {
 
     const workflowDispatchUrl =
       "https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches";
-
+  
     const workflowInputs = {
       versioningTool: order.versioningTool,
       hostingType: order.hostingType,
       monitoringTool: order.monitoringTool,
       hostingJarTool: order.hostingJarTool,
     };
-
-    // Start the workflow asynchronously
-    await axios.post(
-      workflowDispatchUrl,
-      {
-        ref: "main", // Branch to trigger the workflow
-        inputs: workflowInputs,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${GITHUBTOKEN}`,
-          Accept: "application/vnd.github.v3+json",
+  
+    try {
+      // Trigger the workflow
+      const dispatchResponse = await axios.post(
+        workflowDispatchUrl,
+        {
+          ref: "main", // Branch to run the workflow on
+          inputs: workflowInputs,
         },
-      }
-    );
-
-    console.log("Workflow triggered successfully.");
-
-    // Respond immediately with a message saying that the workflow has started
-    res.status(202).json({
-      message: "Workflow started, checking the status.",
-      orderId: id,
-    });
-
-    // Function to check the status of the workflow asynchronously
-    async function checkWorkflowStatus() {
+        {
+          headers: {
+            Authorization: `Bearer ${GITHUBTOKEN}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        }
+      );
+  
+      console.log("Workflow triggered successfully.");
+  
       const workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/runs`;
+  
       let latestRun = null;
-      const maxAttempts = 30;
       let attempt = 0;
-
+      const maxAttempts = 30;
+  
       while (attempt < maxAttempts) {
         attempt++;
         console.log(`Checking workflow status, attempt ${attempt}...`);
+        const { data } = await axios.get(workflowRunsUrl, {
+          headers: {
+            Authorization: `Bearer ${GITHUBTOKEN}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        });
+  
+        const filteredRuns = data.workflow_runs.filter(
+          (run) =>
+            run.head_branch === "main" &&
+            run.status === "completed" &&
+            run.conclusion === "success"
+        );
 
-        try {
-          const { data } = await axios.get(workflowRunsUrl, {
-            headers: {
-              Authorization: `Bearer ${GITHUBTOKEN}`,
-              Accept: "application/vnd.github.v3+json",
-            }
-          });
-
-          // Filter completed successful workflow runs
-          const filteredRuns = data.workflow_runs.filter(
-            (run) =>
-              run.head_branch === "main" &&
-              run.status === "completed" &&
-              run.conclusion === "success"
-          );
-
-          if (filteredRuns.length > 0) {
-            latestRun = filteredRuns.sort(
-              (a, b) => new Date(b.created_at) - new Date(a.created_at)
-            )[0];
-            break;
-          }
-        } catch (error) {
-          console.error("Error fetching workflow status:", error.message);
+        latestRun = filteredRuns.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        )[0];
+  
+        if (latestRun) {
+          console.log("Workflow completed successfully.");
+          break;
         }
-
-        // Wait for 10 seconds before the next attempt
+  
+        // Wait for 10 seconds before retrying
         await new Promise((resolve) => setTimeout(resolve, 10000));
       }
-
+  
       if (!latestRun) {
-        console.error("Workflow did not complete in the expected time.");
-        return;
+        return res.status(500).json({
+          message: "The workflow did not complete within the timeout limit.",
+        });
       }
-
-      console.log("Workflow completed successfully.");
-
-      // Fetch the temporary repositories
+  
+      console.log("Fetching temporary repository information...");
       const reposUrl = "https://api.github.com/user/repos";
+  
       const { data: repos } = await axios.get(reposUrl, {
         headers: {
           Authorization: `Bearer ${GITHUBTOKEN}`,
           Accept: "application/vnd.github.v3+json",
         },
       });
-
+      
       const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
-
+  
       if (filteredRepos.length === 0) {
-        console.error("No temporary repository found.");
-        return;
+        return res.status(404).json({
+          message: "No temporary repository found.",
+        });
       }
-
+  
       const latestRepo = filteredRepos.sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       )[0];
       const repoUrl = latestRepo.html_url;
-
-      console.log("Repository URL:", repoUrl);
+  
+      res.status(200).json({
+        message: "Workflow completed successfully.",
+        repoUrl,
+      });
+    } catch (error) {
+      console.error("Error:", error.message, error.stack);
+      res.status(500).json({
+        message: "An error occurred during the workflow execution.",
+        error: error.message,
+      });
     }
-
-    res.status(200).json({
-      message: "Workflow terminé avec succès.",
-      repoUrl,
-    });
-    // Invoke the workflow status check function asynchronously
-    checkWorkflowStatus();
-
   } catch (error) {
     console.error("Error:", error.message, error.stack);
     res.status(500).json({
-      message: "An error occurred",
+      message: "An error occurred while processing the order.",
       error: error.message,
     });
   }
 });
+
 
 // app.post("/accept-order/:id", async (req, res) => {
 
