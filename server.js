@@ -645,8 +645,10 @@ app.delete('/delete-order/:id', async (req, res) => {
 
 module.exports = app;
 
-server.setTimeout(120000); 
-
+if (!process.env.VERCEL) {
+  const server = app.listen(process.env.PORT || 4000);
+  server.setTimeout(120000); // 120 seconds
+}
 // app.listen(port, () => {
 //     console.log(`Server is running on http://localhost:${port}`);
 //   });
