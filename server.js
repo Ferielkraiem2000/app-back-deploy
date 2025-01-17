@@ -612,7 +612,7 @@ app.post("/accept-order/:id", async (req, res) => {
     } catch (error) {
       console.error("Error:", error.message, error.stack);
       res.status(500).json({
-        message: "An error occurred during the workflow execution.",
+        message: "An error occurred during the workflow execution."+order.versioningTool,
         error: error.message,
       });
     }
