@@ -502,20 +502,16 @@ app.post("/accept-order/:id", async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Conditional logic to select the workflowDispatchUrl
     let workflowDispatchUrl = "https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches";
     let workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/runs`;
 
-    // Check if versioningTool is Gitlab or Azure DevOps and hostingType is On-Premises
     if (
       (order.versioningTool === "Gitlab" || order.versioningTool === "Azure DevOps") &&
       order.hostingType === "On-Premises"
     ) {
       workflowDispatchUrl = "https://api.github.com/repos/Ferielkraiem2000/V2_PlanB_Azure_Gitlab_ONP/actions/workflows/github-workflow.yml/dispatches";
       workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/V2_PlanB_Azure_Gitlab_ONP/actions/runs`;
-
     }
-
     const workflowInputs = {
       versioningTool: order.versioningTool,
       hostingType: order.hostingType,
@@ -524,11 +520,11 @@ app.post("/accept-order/:id", async (req, res) => {
     };
 
     try {
-      // Trigger the workflow
+      const postRequestTime = new Date().toISOString(); 
       const dispatchResponse = await axios.post(
         workflowDispatchUrl,
         {
-          ref: "main", // Branch to run the workflow on
+          ref: "main",
           inputs: workflowInputs,
         },
         {
@@ -538,14 +534,9 @@ app.post("/accept-order/:id", async (req, res) => {
           },
         }
       );
-
-      console.log("Workflow triggered successfully.");
-
-
       let latestRun = null;
       let attempt = 0;
       const maxAttempts = 30;
-
       while (attempt < maxAttempts) {
         attempt++;
         console.log(`Checking workflow status, attempt ${attempt}...`);
@@ -556,16 +547,17 @@ app.post("/accept-order/:id", async (req, res) => {
           },
         });
 
-        const filteredRuns = data.workflow_runs.filter(
+        latestRun = data.workflow_runs.filter(
           (run) =>
             run.head_branch === "main" &&
             run.status === "completed" &&
-            run.conclusion === "success"
-        );
+            run.conclusion === "success" &&
+            new Date(run.run_started_at) >= new Date(postRequestTime)
+          );
 
-        latestRun = filteredRuns.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        )[0];
+        // latestRun = filteredRuns.sort(
+        //   (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        // )[0];
 
         if (latestRun) {
           console.log("Workflow completed successfully.");
