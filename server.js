@@ -152,7 +152,7 @@ app.post("/accept-order/:id", async (req, res) => {
   
     let latestRun = null;
     let attempt = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 20;
   
     while (attempt < maxAttempts) {
       attempt++;
