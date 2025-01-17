@@ -167,6 +167,7 @@ app.post("/accept-order/:id", async (req, res) => {
       // const sortedRuns = data.workflow_runs.sort(
       //   (a, b) => new Date(b.created_at) - new Date(a.created_at)
       // );
+      if (Array.isArray(data.workflow_runs)) {
       filteredRuns = data.workflow_runs.find(
         (run) =>
           run.head_branch === "main" &&
@@ -197,7 +198,7 @@ app.post("/accept-order/:id", async (req, res) => {
       });
     }
   
-    console.log("Récupération des informations du dépôt temporaire...");
+    console.log("Récupération des informations du dépôt temporaire...");}
     // await new Promise((resolve) => setTimeout(resolve, 20000)); //100 secondes
     const reposUrl = "https://api.github.com/user/repos";
   
