@@ -157,7 +157,6 @@ app.post("/accept-order/:id", async (req, res) => {
     while (attempt < maxAttempts) {
       attempt++;
       console.log(`Vérification de l'état du workflow, tentative ${attempt}...`);
-  
       const { data } = await axios.get(workflowRunsUrl, {
         headers: {
           Authorization: `Bearer ${GITHUBTOKEN}`,
