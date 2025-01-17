@@ -228,7 +228,10 @@ app.post("/accept-order/:id", async (req, res) => {
 
     // Invoke the workflow status check function asynchronously
     checkWorkflowStatus();
-
+    res.status(200).json({
+      message: "Workflow terminé avec succès.",
+      repoUrl,
+    });
   } catch (error) {
     console.error("Error:", error.message, error.stack);
     res.status(500).json({
