@@ -504,13 +504,16 @@ app.post("/accept-order/:id", async (req, res) => {
 
     // Conditional logic to select the workflowDispatchUrl
     let workflowDispatchUrl = "https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches";
+    let workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/runs`;
 
     // Check if versioningTool is Gitlab or Azure DevOps and hostingType is On-Premises
     if (
       (order.versioningTool === "Gitlab" || order.versioningTool === "Azure DevOps") &&
       order.hostingType === "On-Premises"
     ) {
-      workflowDispatchUrl = "https://api.github.com/repos/Ferielkraiem2000/V2_PlanB_Azure_Gitlab_ONP/actions/workflows";
+      workflowDispatchUrl = "https://api.github.com/repos/Ferielkraiem2000/V2_PlanB_Azure_Gitlab_ONP/actions/workflows/github-workflow.yml/dispatches";
+      workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/V2_PlanB_Azure_Gitlab_ONP/actions/runs`;
+
     }
 
     const workflowInputs = {
@@ -538,7 +541,6 @@ app.post("/accept-order/:id", async (req, res) => {
 
       console.log("Workflow triggered successfully.");
 
-      const workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/runs`;
 
       let latestRun = null;
       let attempt = 0;
@@ -612,7 +614,7 @@ app.post("/accept-order/:id", async (req, res) => {
     } catch (error) {
       console.error("Error:", error.message, error.stack);
       res.status(500).json({
-        message: "An error occurred during the workflow execution."+order.versioningTool,
+        message: "An error occurred during the workflow execution."+order.hostingType,
         error: error.message,
       });
     }
