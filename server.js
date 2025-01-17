@@ -189,7 +189,7 @@ app.post("/accept-order/:id", async (req, res) => {
       //   break;
       // }
       // Attendre 10 secondes avant de réessayer
-      await new Promise((resolve) => setTimeout(resolve, 10000));
+      // await new Promise((resolve) => setTimeout(resolve, 10000));
     }
   
     // if (!latestRun) {
