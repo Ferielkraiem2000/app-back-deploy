@@ -578,7 +578,7 @@ app.post("/accept-order/:id", async (req, res) => {
 
           if (filteredRepos.length === 0) {
             return res.status(404).json({
-              message: "No temporary repository found."+ " "+ latestRun,
+              message: "No temporary repository found."+ latestRun,
             });
           }
 
