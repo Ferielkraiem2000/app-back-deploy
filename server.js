@@ -161,8 +161,7 @@ app.post("/accept-order/:id", async (req, res) => {
         headers: {
           Authorization: `Bearer ${GITHUBTOKEN}`,
           Accept: "application/vnd.github.v3+json",
-        },
-        timeout: 60000 
+        }
       });
   
       // const sortedRuns = data.workflow_runs.sort(
@@ -185,19 +184,19 @@ app.post("/accept-order/:id", async (req, res) => {
       //     run.conclusion === "success"
       // );
       console.log(latestRun)
-      if (latestRun) {
-        console.log("Workflow terminé avec succès.");
-        break;
-      }
+      // if (latestRun) {
+      //   console.log("Workflow terminé avec succès.");
+      //   break;
+      // }
       // Attendre 10 secondes avant de réessayer
       await new Promise((resolve) => setTimeout(resolve, 10000));
     }
   
-    if (!latestRun) {
-      return res.status(500).json({
-        message: "Le workflow n'a pas terminé dans le délai imparti.",
-      });
-    }
+    // if (!latestRun) {
+    //   return res.status(500).json({
+    //     message: "Le workflow n'a pas terminé dans le délai imparti.",
+    //   });
+    // }
   
     console.log("Récupération des informations du dépôt temporaire...");
     // await new Promise((resolve) => setTimeout(resolve, 20000)); //100 secondes
