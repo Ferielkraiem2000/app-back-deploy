@@ -172,7 +172,7 @@ app.post("/accept-order/:id", async (req, res) => {
           run.status === "completed" &&
           run.conclusion === "success"
       );
-  
+      console.log(latestRun)
       if (latestRun) {
         console.log("Workflow terminé avec succès.");
         break;
