@@ -165,8 +165,10 @@ app.post("/accept-order/:id", async (req, res) => {
         },
       });
   
-      // Trouver la dernière exécution du workflow
-      latestRun = data.workflow_runs.find(
+      const sortedRuns = data.workflow_runs.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+      latestRun = sortedRuns.workflow_runs.find(
         (run) =>
           run.head_branch === "main" &&
           run.status === "completed" &&
@@ -197,7 +199,7 @@ app.post("/accept-order/:id", async (req, res) => {
         Accept: "application/vnd.github.v3+json",
       },
     });
-  
+      
     const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
   
     if (filteredRepos.length === 0) {
