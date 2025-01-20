@@ -8,6 +8,7 @@ const connectDB = require('./db');
 const User = require('./models/user');
 const Order = require('./models/order');
 const axios = require('axios');
+const Bull = require('bull');
 
 const dotenv = require('dotenv');
 app.use(express.json()); 
@@ -104,6 +105,9 @@ const result=require("dotenv").config();
 // const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
 const GITHUBTOKEN=process.env.GITHUBTOKEN; 
 console.log("*************",GITHUBTOKEN)
+const workflowQueue = new Bull('workflowQueue', {
+  redis: { host: 'localhost', port: 6379 }, // Use your Redis server details
+});
 
 // app.post("/accept-order/:id", async (req, res) => {
 //   try {
