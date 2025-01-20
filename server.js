@@ -139,10 +139,10 @@ app.post("/accept-order/:id", async (req, res) => {
     };
 
     try {
-      const postRequestTime = new Date().toISOString();
-      console.log(new Date(postRequestTime).getTime());
+      // const postRequestTime = new Date().toISOString();
+      // console.log(new Date(postRequestTime).getTime());
       //trigger workflow
-      const dispatchResponse = await axios.post(
+      await axios.post(
         workflowDispatchUrl,
         {
           ref: "main",
@@ -193,7 +193,6 @@ app.post("/accept-order/:id", async (req, res) => {
       },
     });
     const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
-    console.log("repos",filteredRepos);
     if (filteredRepos.length === 0) {
       return res.status(404).json({
         message: "No temporary repository found." + JSON.stringify(latestRun),
@@ -220,8 +219,6 @@ app.post("/accept-order/:id", async (req, res) => {
     });
   }
 });
-
-
 
 app.delete('/delete-order/:id', async (req, res) => {
     try {
