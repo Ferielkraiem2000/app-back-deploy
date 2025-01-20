@@ -220,11 +220,11 @@ console.log("*************",GITHUBTOKEN)
 //     });
 //   }
 // });
+// Route to accept an order and trigger GitHub workflows
 app.post("/accept-order/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Mise à jour du statut de la commande
     const order = await Order.findByIdAndUpdate(
       id,
       { status: "acceptée" },
@@ -236,7 +236,6 @@ app.post("/accept-order/:id", async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Définir les URLs pour GitHub Actions
     let workflowDispatchUrl =
       "https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches";
     let workflowRunsUrl =
@@ -260,7 +259,7 @@ app.post("/accept-order/:id", async (req, res) => {
     };
 
     try {
-      // Déclencher le workflow
+      // Trigger the workflow
       await axios.post(
         workflowDispatchUrl,
         {
@@ -275,7 +274,7 @@ app.post("/accept-order/:id", async (req, res) => {
         }
       );
 
-      // Attendre la fin du workflow
+      // Wait for the workflow to complete
       let latestRun = null;
       const maxAttempts = 15;
       const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -302,7 +301,7 @@ app.post("/accept-order/:id", async (req, res) => {
 
         if (latestRun) break;
 
-        await delay(5000); // Attendre 5 secondes avant la prochaine tentative
+        await delay(5000); // Wait 5 seconds before the next attempt
       }
 
       if (!latestRun) {
@@ -311,7 +310,6 @@ app.post("/accept-order/:id", async (req, res) => {
         });
       }
 
-      // Récupérer les dépôts GitHub
       const { data: repos } = await axios.get("https://api.github.com/user/repos", {
         headers: {
           Authorization: `Bearer ${GITHUBTOKEN}`,
@@ -326,7 +324,6 @@ app.post("/accept-order/:id", async (req, res) => {
         });
       }
 
-      // Récupérer le dernier dépôt créé
       const latestRepo = filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
       const repoUrl = latestRepo.html_url;
 
@@ -349,6 +346,7 @@ app.post("/accept-order/:id", async (req, res) => {
     });
   }
 });
+
 
 app.delete('/delete-order/:id', async (req, res) => {
     try {
