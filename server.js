@@ -223,24 +223,23 @@ const workflowQueue = new Bull('workflowQueue', {
 //     });
 //   }
 // });
-// POST route to accept order and trigger the workflow
 app.post("/accept-order/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Find and update the order status
-    const order = await Order.findByIdAndUpdate(id, { status: "acceptée" }, { new: true });
-
+    const order = await Order.findById(id);
     if (!order) {
       console.error(`Order not found for ID: ${id}`);
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Determine the appropriate workflow dispatch URL
     let workflowDispatchUrl = "https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches";
     let workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/runs`;
 
-    if (order.versioningTool === "Gitlab" || order.versioningTool === "Azure DevOps" && order.hostingType === "On-Premises") {
+    if (
+      (order.versioningTool === "Gitlab" || order.versioningTool === "Azure DevOps") &&
+      order.hostingType === "On-Premises"
+    ) {
       workflowDispatchUrl = "https://api.github.com/repos/Ferielkraiem2000/V2_PlanB_Azure_Gitlab_ONP/actions/workflows/github-workflow.yml/dispatches";
       workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/V2_PlanB_Azure_Gitlab_ONP/actions/runs`;
     }
@@ -252,26 +251,92 @@ app.post("/accept-order/:id", async (req, res) => {
       hostingJarTool: order.hostingJarTool,
     };
 
-    // Trigger the workflow asynchronously
-    await axios.post(
-      workflowDispatchUrl,
-      { ref: "main", inputs: workflowInputs },
-      {
+    try {
+      // Trigger the workflow
+      await axios.post(
+        workflowDispatchUrl,
+        {
+          ref: "main",
+          inputs: workflowInputs,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${GITHUBTOKEN}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        }
+      );
+
+      let latestRun = null;
+      const maxAttempts = 15;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        console.log(`Checking workflow status, attempt ${attempt}...`);
+
+        const { data } = await axios.get(workflowRunsUrl, {
+          headers: {
+            Authorization: `Bearer ${GITHUBTOKEN}`,
+            Accept: "application/vnd.github.v3+json",
+          },
+        });
+
+        latestRun = data.workflow_runs
+          .filter(
+            (run) =>
+              run.head_branch === "main" &&
+              run.status === "completed" &&
+              run.conclusion === "success" &&
+              run.name === "Create Temporary GitHub Repository for Client"
+          )
+          .sort((a, b) => new Date(b.run_started_at) - new Date(a.run_started_at))[0];
+
+        if (latestRun) {
+          console.log("Workflow completed successfully.");
+          break;
+        }
+      }
+
+      const reposUrl = "https://api.github.com/user/repos";
+      const { data: repos } = await axios.get(reposUrl, {
         headers: {
           Authorization: `Bearer ${GITHUBTOKEN}`,
           Accept: "application/vnd.github.v3+json",
         },
+      });
+
+      const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
+      if (filteredRepos.length === 0) {
+        return res.status(404).json({
+          message: "No temporary repository found." + JSON.stringify(latestRun),
+        });
       }
-    );
 
-    // Add a job to the queue to process workflow completion
-    workflowQueue.add({ orderId: order.id, workflowRunsUrl });
+      const latestRepo = filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      const repoUrl = latestRepo.html_url;
 
-    // Respond immediately to the client
-    return res.status(200).json({
-      message: "Order accepted and workflow triggered. You will be notified once the workflow completes.",
-    });
-
+      // Only update the order status if the repoUrl is not null
+      if (repoUrl) {
+        await Order.findByIdAndUpdate(
+          id,
+          { status: "acceptée", repoUrl: repoUrl },
+          { new: true }
+        );
+        return res.status(200).json({
+          message: "Workflow completed successfully.",
+          repoUrl,
+        });
+      } else {
+        return res.status(400).json({
+          message: "Repository URL is null, cannot update order status.",
+        });
+      }
+    } catch (error) {
+      console.error("Error during workflow execution:", error.message, error.stack);
+      return res.status(500).json({
+        message: "An error occurred during the workflow execution.",
+        error: error.message,
+      });
+    }
   } catch (error) {
     console.error("Error while processing the order:", error.message, error.stack);
     return res.status(500).json({
