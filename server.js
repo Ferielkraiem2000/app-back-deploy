@@ -109,125 +109,16 @@ const workflowQueue = new Bull('workflowQueue', {
   redis: { host: 'localhost', port: 6379 }, // Use your Redis server details
 });
 
-// app.post("/accept-order/:id", async (req, res) => {
-//   try {
-//     const { id } = req.params;
-
-//     const order = await Order.findByIdAndUpdate(
-//       id,
-//       { status: "acceptée" },
-//       { new: true }
-//     );
-
-//     if (!order) {
-//       console.error(`Order not found for ID: ${id}`);
-//       return res.status(404).json({ message: "Order not found" });
-//     }
-
-//     let workflowDispatchUrl = "https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/workflows/github-workflow.yml/dispatches";
-//     let workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/runs`;
-
-//     if (
-//       (order.versioningTool === "Gitlab" || order.versioningTool === "Azure DevOps") &&
-//       order.hostingType === "On-Premises"
-//     ) {
-//       workflowDispatchUrl = "https://api.github.com/repos/Ferielkraiem2000/V2_PlanB_Azure_Gitlab_ONP/actions/workflows/github-workflow.yml/dispatches";
-//       workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/V2_PlanB_Azure_Gitlab_ONP/actions/runs`;
-//     }
-
-//     const workflowInputs = {
-//       versioningTool: order.versioningTool,
-//       hostingType: order.hostingType,
-//       monitoringTool: order.monitoringTool,
-//       hostingJarTool: order.hostingJarTool,
-//     };
-
-//     try {
-//       // const postRequestTime = new Date().toISOString();
-//       // console.log(new Date(postRequestTime).getTime());
-//       //trigger workflow
-//       await axios.post(
-//         workflowDispatchUrl,
-//         {
-//           ref: "main",
-//           inputs: workflowInputs,
-//         },
-//         {
-//           headers: {
-//             Authorization: `Bearer ${GITHUBTOKEN}`,
-//             Accept: "application/vnd.github.v3+json",
-//           },
-//         }
-//       );
-
-//       let latestRun = null;
-//       const maxAttempts = 15;
-//       console.log(maxAttempts);
-      
-//       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-//         console.log(`Checking workflow status, attempt ${attempt}...`);
-
-//         const { data } = await axios.get(workflowRunsUrl, {
-//           headers: {
-//             Authorization: `Bearer ${GITHUBTOKEN}`,
-//             Accept: "application/vnd.github.v3+json",
-//           },
-//         });
-
-//         latestRun = data.workflow_runs
-//           .filter(
-//             (run) =>
-//               run.head_branch === "main" &&
-//               run.status === "completed" &&
-//               run.conclusion === "success" &&
-//               run.name === "Create Temporary GitHub Repository for Client" 
-//               // new Date(run.run_started_at).getTime() >= new Date(postRequestTime).getTime()
-//             ).sort((a, b) => new Date(b.run_started_at) - new Date(a.run_started_at))[0];
-        
-//         console.log("latestRun",latestRun);
-//         if (latestRun) {
-//           console.log("Workflow completed successfully.");
-//         }
-//       }
-//     const reposUrl = "https://api.github.com/user/repos";
-//     const { data: repos } = await axios.get(reposUrl, {
-//       headers: {
-//         Authorization: `Bearer ${GITHUBTOKEN}`,
-//         Accept: "application/vnd.github.v3+json",
-//       },
-//     });
-//     const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
-//     if (filteredRepos.length === 0) {
-//       return res.status(404).json({
-//         message: "No temporary repository found." + JSON.stringify(latestRun),
-//       });
-//     }
-//     const latestRepo = filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-//     const repoUrl = latestRepo.html_url;
-//     return res.status(200).json({
-//       message: "Workflow completed successfully.",
-//       repoUrl,
-//     });  
-//   } catch (error) {
-//       console.error("Error during workflow execution:", error.message, error.stack);
-//       return res.status(500).json({
-//         message: "An error occurred during the workflow execution.",
-//         error: error.message,
-//       });
-//     }
-//   } catch (error) {
-//     console.error("Error while processing the order:", error.message, error.stack);
-//     return res.status(500).json({
-//       message: "An error occurred while processing the order.",
-//       error: error.message,
-//     });
-//   }
-// });
 app.post("/accept-order/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const order = await Order.findById(id);
+    const order = await Order.findByIdAndUpdate(
+      id,
+      { status: "acceptée" },
+      { new: true }
+    );
+
     if (!order) {
       console.error(`Order not found for ID: ${id}`);
       return res.status(404).json({ message: "Order not found" });
@@ -252,7 +143,9 @@ app.post("/accept-order/:id", async (req, res) => {
     };
 
     try {
-      // Trigger the workflow
+      // const postRequestTime = new Date().toISOString();
+      // console.log(new Date(postRequestTime).getTime());
+      //trigger workflow
       await axios.post(
         workflowDispatchUrl,
         {
@@ -269,7 +162,8 @@ app.post("/accept-order/:id", async (req, res) => {
 
       let latestRun = null;
       const maxAttempts = 15;
-
+      console.log(maxAttempts);
+      
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         console.log(`Checking workflow status, attempt ${attempt}...`);
 
@@ -286,51 +180,35 @@ app.post("/accept-order/:id", async (req, res) => {
               run.head_branch === "main" &&
               run.status === "completed" &&
               run.conclusion === "success" &&
-              run.name === "Create Temporary GitHub Repository for Client"
-          )
-          .sort((a, b) => new Date(b.run_started_at) - new Date(a.run_started_at))[0];
-
+              run.name === "Create Temporary GitHub Repository for Client" 
+              // new Date(run.run_started_at).getTime() >= new Date(postRequestTime).getTime()
+            ).sort((a, b) => new Date(b.run_started_at) - new Date(a.run_started_at))[0];
+        
+        console.log("latestRun",latestRun);
         if (latestRun) {
           console.log("Workflow completed successfully.");
-          break;
         }
       }
-
-      const reposUrl = "https://api.github.com/user/repos";
-      const { data: repos } = await axios.get(reposUrl, {
-        headers: {
-          Authorization: `Bearer ${GITHUBTOKEN}`,
-          Accept: "application/vnd.github.v3+json",
-        },
+    const reposUrl = "https://api.github.com/user/repos";
+    const { data: repos } = await axios.get(reposUrl, {
+      headers: {
+        Authorization: `Bearer ${GITHUBTOKEN}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+    const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
+    if (filteredRepos.length === 0) {
+      return res.status(404).json({
+        message: "No temporary repository found." + JSON.stringify(latestRun),
       });
-
-      const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
-      if (filteredRepos.length === 0) {
-        return res.status(404).json({
-          message: "No temporary repository found." + JSON.stringify(latestRun),
-        });
-      }
-
-      const latestRepo = filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-      const repoUrl = latestRepo.html_url;
-
-      // Only update the order status if the repoUrl is not null
-      if (repoUrl) {
-        await Order.findByIdAndUpdate(
-          id,
-          { status: "acceptée", repoUrl: repoUrl },
-          { new: true }
-        );
-        return res.status(200).json({
-          message: "Workflow completed successfully.",
-          repoUrl,
-        });
-      } else {
-        return res.status(400).json({
-          message: "Repository URL is null, cannot update order status.",
-        });
-      }
-    } catch (error) {
+    }
+    const latestRepo = filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    const repoUrl = latestRepo.html_url;
+    return res.status(200).json({
+      message: "Workflow completed successfully.",
+      repoUrl,
+    });  
+  } catch (error) {
       console.error("Error during workflow execution:", error.message, error.stack);
       return res.status(500).json({
         message: "An error occurred during the workflow execution.",
@@ -343,70 +221,6 @@ app.post("/accept-order/:id", async (req, res) => {
       message: "An error occurred while processing the order.",
       error: error.message,
     });
-  }
-});
-
-// Define a job processor for the queue to handle the background tasks
-workflowQueue.process(async (job) => {
-  const { orderId, workflowRunsUrl } = job.data;
-
-  try {
-    // Fetch order details
-    const order = await Order.findById(orderId);
-    if (!order) {
-      console.error(`Order not found for ID: ${orderId}`);
-      return;
-    }
-
-    // Fetch the workflow runs
-    const { data } = await axios.get(workflowRunsUrl, {
-      headers: {
-        Authorization: `Bearer ${GITHUBTOKEN}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
-
-    // Get the latest completed successful workflow run
-    const latestRun = data.workflow_runs
-      .filter(run => run.head_branch === "main" && run.status === "completed" && run.conclusion === "success")
-      .sort((a, b) => new Date(b.run_started_at) - new Date(a.run_started_at))[0];
-
-    if (!latestRun) {
-      console.log("Workflow still in progress...");
-      return;
-    }
-
-    console.log("Workflow completed successfully. Latest run:", latestRun);
-
-    // Fetch repositories to find the temporary repository
-    const reposUrl = "https://api.github.com/user/repos";
-    const { data: repos } = await axios.get(reposUrl, {
-      headers: {
-        Authorization: `Bearer ${GITHUBTOKEN}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
-
-    const filteredRepos = repos.filter((repo) => repo.name.includes("temp-repo"));
-
-    if (filteredRepos.length === 0) {
-      console.error("No temporary repository found.");
-      return;
-    }
-
-    // Get the latest temporary repository
-    const latestRepo = filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-    const repoUrl = latestRepo.html_url;
-
-    // Optionally, update the order status with the repo URL
-    await Order.findByIdAndUpdate(orderId, { repoUrl });
-
-    console.log("Repo URL:", repoUrl);
-
-    // Send notifications or updates if needed
-
-  } catch (error) {
-    console.error("Error processing workflow status:", error.message);
   }
 });
 
@@ -434,7 +248,7 @@ app.delete('/delete-order/:id', async (req, res) => {
 
 // module.exports = app;
 
-const server=app.listen(port, () => {
+app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
   });
   // server.setTimeout(240000); // 120 seconds
