@@ -146,22 +146,20 @@ app.get("/orders", async (req, res) => {
 const result=require("dotenv").config();
 // const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
 const GITHUBTOKEN=process.env.GITHUBTOKEN; 
-app.get('/order-history/:customerId', async (req, res) => {
-  const { customerId } = req.params;
-  // const customerId = req.user.id;  // Get customerId from the decoded JWT
-
+// Get order history by customer ID
+app.get('/customer-history', verifyToken, async (req, res) => {
   try {
-    const orders = await Order.find({ customerId }).sort({ createdAt: -1 });  // Sorting by most recent orders
-    if (orders.length === 0) {
-      return res.status(404).send({ message: 'No orders found for this customer.' });
-    }
+      const orders = await Order.find({ customerId: req.userId }).sort({ createdAt: -1 });
 
-    res.status(200).send({ orders });
+      if (orders.length === 0) {
+          return res.status(404).json({ message: 'No orders found for this customer.' });
+      }
+
+      res.status(200).json({ orders });
   } catch (err) {
-    res.status(500).send({ message: 'Error retrieving order history', error: err.message });
+      res.status(500).json({ message: 'Error retrieving order history', error: err.message });
   }
 });
-
 
 app.post("/accept-order/:id", async (req, res) => {
   try {
