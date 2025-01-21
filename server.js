@@ -119,19 +119,18 @@ app.get('/profile', verifyToken, async (req, res) => {
 
 
 app.post('/save-order', async (req, res) => {
-    console.log("Request body:", req.body);   
-    const {versioningTool, hostingType, monitoringTool, hostingJarTool,status} = req.body;
-    const customerId = req.user.id;
+    const {versioningTool, hostingType, monitoringTool, hostingJarTool,status,customerId} = req.body;
+    console.log(req)
     const order = new Order({
-        customerId,
         versioningTool,
         hostingType,
         monitoringTool,
         hostingJarTool,
         status: status || "en attente",
+        customerId,
     });
     await order.save();
-    res.status(201).send({ message: "Order saved successfully!"+customerId });
+    res.status(201).send({ message: "Order saved successfully!"});
   });
 
 app.get("/orders", async (req, res) => {
@@ -146,10 +145,10 @@ app.get("/orders", async (req, res) => {
 const result=require("dotenv").config();
 // const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
 const GITHUBTOKEN=process.env.GITHUBTOKEN; 
-// Get order history by customer ID
-app.get('/customer-history', verifyToken, async (req, res) => {
+app.get('/client-orders/:customerId', verifyToken, async (req, res) => {
   try {
-      const orders = await Order.find({ customerId: req.userId }).sort({ createdAt: -1 });
+      const { customerId } = req.params; // Get customerId from the URL parameter
+      const orders = await Order.find({ customerId }).sort({ createdAt: -1 });
 
       if (orders.length === 0) {
           return res.status(404).json({ message: 'No orders found for this customer.' });
@@ -160,7 +159,6 @@ app.get('/customer-history', verifyToken, async (req, res) => {
       res.status(500).json({ message: 'Error retrieving order history', error: err.message });
   }
 });
-
 app.post("/accept-order/:id", async (req, res) => {
   try {
     const { id } = req.params;
