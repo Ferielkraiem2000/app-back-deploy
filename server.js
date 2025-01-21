@@ -8,9 +8,12 @@ const connectDB = require('./db');
 const User = require('./models/user');
 const Order = require('./models/order');
 const axios = require('axios');
-const Bull = require('bull');
-
 const dotenv = require('dotenv');
+const crypto = require('crypto');
+const JWT_SECRET = crypto.randomBytes(64).toString('hex');
+const jwt = require('jsonwebtoken');
+console.log("JWT_SECRET:",JWT_SECRET);
+
 app.use(express.json()); 
 app.use(cors());
 connectDB();
@@ -47,41 +50,80 @@ app.post('/signup', async (req, res) => {
         res.status(500).json({ message: 'Erreur serveur', error: error.message });
     }
 });
+const verifyToken = (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  console.log("token",token);
+  
+  if (!token) {
+    return res.status(403).json({ message: 'Access denied. No token provided.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log("userid",decoded)
+
+    req.userId = decoded.id; 
+    next();
+  } catch (err) {
+    return res.status(400).json({ message: 'Invalid token', error: err.message });
+  }
+};
+
 
 app.post('/signin', async (req, res) => {
-    const { workEmail, password } = req.body;
+  const { workEmail, password } = req.body;
 
-    if (!workEmail || !password) {
-        return res.status(400).json({ message: 'Email et mot de passe sont obligatoires' });
+  if (!workEmail || !password) {
+    return res.status(400).json({ message: 'Email et mot de passe sont obligatoires' });
+  }
+
+  try {
+    const user = await User.findOne({ workEmail });
+    const token = jwt.sign(
+      { id: user._id, workEmail: user.workEmail },
+      JWT_SECRET,
+      { expiresIn: '1h' }  
+    );
+    console.log("**",token)
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur introuvable' });
     }
 
-    try {
-        const user = await User.findOne({ workEmail });
-        if (!user) {
-            return res.status(404).json({ message: 'Utilisateur introuvable' });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Mot de passe incorrect' });
-        }
-        
-        
-
-        // const token = jwt.sign({ id: user._id, workEmail: user.workEmail }, JWT_SECRET, {
-        //     expiresIn: '1h',
-        // });
-
-        res.status(200).json({ message: 'Connexion réussie'});
-    } catch (err) {
-        res.status(500).json({ message: 'Erreur serveur', error: err.message });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Mot de passe incorrect' });
     }
+
+    res.status(200).json({
+      message: 'Connexion réussie',
+      token, 
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur', error: err.message });
+  }
 });
 
+app.get('/profile', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    console.log("req",user) 
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+
+
 app.post('/save-order', async (req, res) => {
-    console.log("Request body:", req.body); 
-    const { versioningTool, hostingType, monitoringTool, hostingJarTool,status } = req.body;
+    console.log("Request body:", req.body);   
+    const {versioningTool, hostingType, monitoringTool, hostingJarTool,status} = req.body;
+    const customerId = req.user.id;
     const order = new Order({
+        customerId,
         versioningTool,
         hostingType,
         monitoringTool,
@@ -89,7 +131,7 @@ app.post('/save-order', async (req, res) => {
         status: status || "en attente",
     });
     await order.save();
-    res.status(201).send({ message: "Order saved successfully!" });
+    res.status(201).send({ message: "Order saved successfully!"+customerId });
   });
 
 app.get("/orders", async (req, res) => {
@@ -104,10 +146,22 @@ app.get("/orders", async (req, res) => {
 const result=require("dotenv").config();
 // const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
 const GITHUBTOKEN=process.env.GITHUBTOKEN; 
-console.log("*************",GITHUBTOKEN)
-const workflowQueue = new Bull('workflowQueue', {
-  redis: { host: 'localhost', port: 6379 }, // Use your Redis server details
+app.get('/order-history/:customerId', async (req, res) => {
+  const { customerId } = req.params;
+  // const customerId = req.user.id;  // Get customerId from the decoded JWT
+
+  try {
+    const orders = await Order.find({ customerId }).sort({ createdAt: -1 });  // Sorting by most recent orders
+    if (orders.length === 0) {
+      return res.status(404).send({ message: 'No orders found for this customer.' });
+    }
+
+    res.status(200).send({ orders });
+  } catch (err) {
+    res.status(500).send({ message: 'Error retrieving order history', error: err.message });
+  }
 });
+
 
 app.post("/accept-order/:id", async (req, res) => {
   try {
@@ -128,7 +182,7 @@ app.post("/accept-order/:id", async (req, res) => {
     let workflowRunsUrl = `https://api.github.com/repos/Ferielkraiem2000/Pipelines_Version2/actions/runs`;
 
     if (
-      (order.versioningTool === "Gitlab" || order.versioningTool === "Azure DevOps") &&
+      (order.versioningTool === "Gitlab" || order.versioningTool === "AzureDevOps") &&
       order.hostingType === "On-Premises"
     ) {
       workflowDispatchUrl = "https://api.github.com/repos/Ferielkraiem2000/V2_PlanB_Azure_Gitlab_ONP/actions/workflows/github-workflow.yml/dispatches";
@@ -246,9 +300,10 @@ app.delete('/delete-order/:id', async (req, res) => {
     }
 });
 
-// module.exports = app;
+module.exports = app;
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
   });
+
   // server.setTimeout(240000); // 120 seconds
