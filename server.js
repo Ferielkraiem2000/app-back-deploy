@@ -144,12 +144,12 @@ app.get("/orders", async (req, res) => {
       res.status(500).json({ message: "Error fetching orders", error });
     }
   });  
-  app.get("/customer/:customerId", async (req, res) => {
+app.get("/customer/:customerId", async (req, res) => {
     try {
       const { customerId } = req.params;
   
       const customer = await User.findById(customerId, 'name'); // Fetch only the 'name' field
-  
+      console.log(customer)
       if (!customer) {
         return res.status(404).json({ message: "Customer not found" });
       }
