@@ -136,12 +136,45 @@ app.post('/save-order', async (req, res) => {
 app.get("/orders", async (req, res) => {
 
     try {
-      const orders = await Order.find();
+      // const orders = await Order.find();
+      const orders = await Order.find().populate("customerId", "name -_id");
+      console.log(orders)
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Error fetching orders", error });
     }
   });  
+  app.get("/customer/:customerId", async (req, res) => {
+    try {
+      const { customerId } = req.params;
+  
+      const customer = await User.findById(customerId, 'name'); // Fetch only the 'name' field
+  
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+  
+      res.json({ customerName: customer.name });
+    } catch (error) {
+      console.error("Error fetching customer:", error);
+      res.status(500).json({ message: "Error fetching customer", error });
+    }
+  });
+  
+// app.get("/orders", async (req, res) => {
+//   try {
+//     // Fetch orders and populate customerId with the name of the customer
+//     const orders = await Order.find()
+//       .populate("customerId", "name") // Populate only the 'name' of the customer
+//       .exec(); // Execute the query
+
+//     // Send the orders with the customer name in the response
+//     res.json(orders);
+//   } catch (error) {
+//     res.status(500).json({ message: "Error fetching orders", error });
+//   }
+// });
+
 const result=require("dotenv").config();
 // const GITHUBTOKEN = result.parsed.GITHUBTOKEN;
 const GITHUBTOKEN=process.env.GITHUBTOKEN; 
@@ -276,8 +309,14 @@ app.post("/accept-order/:id", async (req, res) => {
 
 app.delete('/delete-order/:id', async (req, res) => {
     try {
+      
         const { id } = req.params;
 
+        const order = await Order.findByIdAndUpdate(
+          id,
+          { status: "annulée" },
+          { new: true }
+        );
         console.log("Deleting order with ID:", id);
 
         const deletedOrder = await Order.findByIdAndDelete(id);
